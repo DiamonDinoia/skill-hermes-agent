@@ -5,13 +5,13 @@ Agent CLI/TUI, its gateway, cron jobs and delegation system, with operational le
 
 ## Contents
 
-- `SKILL.md`: the skill body, operational rules first
-- `references/`: per-topic detail (configuration, CLI, TUI widgets, plugins, troubleshooting)
-- `templates/`: starter files (skin, widget, plugin)
+- `skills/hermes-agent/SKILL.md`: the skill body, operational rules first
+- `skills/hermes-agent/references/`: per-topic detail (configuration, CLI, TUI widgets, plugins, troubleshooting)
+- `skills/hermes-agent/templates/`: starter files (skin, widget, plugin)
 
 ## Install
 
-Link or copy this directory into `~/.hermes/skills/<category>/hermes-agent`, open a Hermes session, and load it with
+Link or copy `skills/hermes-agent/` into `~/.hermes/skills/<category>/hermes-agent`, open a Hermes session, and load it with
 `skill_view(name='hermes-agent')`.
 
 ## License
