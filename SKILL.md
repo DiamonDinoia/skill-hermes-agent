@@ -1,7 +1,7 @@
 ---
 name: hermes-agent
 description: "Use, configure, theme, extend, and orchestrate Hermes Agent."
-version: 3.2.0
+version: 1.0.0
 author: Hermes Agent + Teknium
 license: MIT
 platforms: [linux, macos, windows]
@@ -219,3 +219,27 @@ terminal(command="tmux new-session -d -s resumed 'hermes --resume 20260225_14305
 - **The default provider refuses models it doesn't host.** Before assuming flatiron or any non-default provider is down, test a cheap model that lives on it (`hermes chat --provider flatiron -m moonshotai/Kimi-K3 -q pong -Q`). A `--provider X` run of the default model exits 1 for the wrong reason when X doesn't host the default.
 - **Non-interactive ssh skips rc files.** Every remote command needs `ssh host 'PATH=$HOME/.local/bin:$PATH; ...'` or `bash -lic` — otherwise `hermes` and user binaries don't resolve.
 - **UI installs tolerate patches that they diverge from upstream.** ui-tui customization work lives as patch files in `~/dotfiles/hermes/.hermes/patches/` (currently `delegate-skills-nesting.patch`, `tui-statusbar.patch`); user tracks them in dotfiles stow, not in the Hermes repo itself. A fresh checkout or host sync applies them onto stock code after any upstream update via `git apply -R <patch>` → `git merge --ff-only` → `git apply <patch>`; two patch files can overlap safely. Read `dotfiles/BOOTSTRAP.md` and `dotfiles/hermes/.hermes/patches/` for the current convention before adding one.
+
+## Operational Lessons (from session mining)
+
+Gateway and restart:
+
+- **Restarts load session and config fixes.** A config or prompt patch applies only after a hermes restart. A Sol review needs the gateway started with `HERMES_DUMP_REQUESTS=1`.
+
+Updates:
+
+- **An upstream update flips the update channel to stable.** Restore main with `hermes update --set-channel main`. The warning "SUBAGENT MODEL REJECTED" is a text heuristic; confirm a tier with one PONG before you act.
+
+Cron:
+
+- **Cron order matters.** Refresh the routing cache (`hermes-dispatch-route pick`) before the widget probe, or the widget copies a fresh-but-wrong status.
+- **Cron delivery targets messaging platforms only.** There is no wake-the-local-TUI path; a cron job cannot open or nudge a local CLI session.
+
+TUI:
+
+- **Ctrl+T opens the agents overlay.** It lists in-process delegate_task children; press t on a row to tail the live transcript. Ctrl+X attaches a background `-Q` session and replaces the current view. `-Q` jobs are invisible otherwise, so every background launch message must quote the log path and a `pgrep -af` watch command.
+
+Hosts:
+
+- **Never copy secrets between hosts.** No auth.json, .env or token files; run the installer per host. Installers are user-level only.
+- **Non-interactive ssh has a bare PATH.** No module command and no ~/.local/bin. Use `bash -lc` or a `#!/bin/bash -l` script for every remote command (for example on a workstation).
