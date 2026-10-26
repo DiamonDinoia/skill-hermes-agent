@@ -52,7 +52,9 @@ python -c "from tools.delegate_tool import _get_max_concurrent_children; \
 ```
 
 If config and `_get_max_concurrent_children()` agree, and neither log line
-appears, **the cap is the model**, not Hermes.
+appears, two limits remain. The model self-limits the batch, and
+`delegation.oneshot_max_children`, default 2, caps one-shot sessions such as
+`hermes chat -Q`.
 
 ## Why models self-limit batches
 
