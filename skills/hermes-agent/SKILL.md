@@ -190,6 +190,8 @@ terminal(command="hermes chat --resume <session_id> --query-file /path/brief2.md
 terminal(command="tmux new-session -d -s resumed 'hermes --resume 20260225_143052_a1b2c3'", timeout=10)
 ```
 
+`hermes chat --resume <session_id>` exits 2 without resuming when job-shaping flags differ from the original invocation (observed on `--max-turns`). Keep the flags identical to the original run, or omit the changed flag entirely. Before resuming, record the launch flags of every dispatched job (for example into a `*-flags.txt` next to its log) so a fix-round resume can reuse them.
+
 ### Tips
 
 - **Prefer `delegate_task` for quick subtasks** — less overhead than spawning a full process
