@@ -13,14 +13,14 @@ which reads `delegation.max_concurrent_children` from `config.yaml`
 (env fallback `DELEGATION_MAX_CONCURRENT_CHILDREN`, default 3). Floor of 1.
 **No hard ceiling.**
 
-1. **Per-call hard reject** — `tools/delegate_tool.py` (~line 1953).
+1. **Per-call hard reject** — `tools/delegate_tool_tasks.py:100`.
    If `len(tasks) > max_children`, the call returns a `tool_error` with the
    exact message: `"Too many tasks: {N} provided, but
    max_concurrent_children is {M}. ..."` The model sees this as a failed
    tool call and usually retries with fewer tasks.
 
-2. **Per-turn truncator** — `run_agent.py::AIAgent._cap_delegate_task_calls`
-   (~line 5708). If the model emits *multiple separate* `delegate_task`
+2. **Per-turn truncator** — `run_agent.py:1182`
+   (`AIAgent._cap_delegate_task_calls`). If the model emits *multiple separate* `delegate_task`
    tool_calls in a single assistant turn, the count of those calls is
    truncated to `max_children`. Logs as
    `Truncated N excess delegate_task call(s) to enforce
@@ -34,7 +34,7 @@ which reads `delegation.max_concurrent_children` from `config.yaml`
    refusing my value."
 
 4. **One-shot session budget.** `tools/delegate_tool.py::_oneshot_spawn_budget`
-   (defined at line 636, charged at line 725), resolved through
+   (defined at line 636, charged at line 724), resolved through
    `_get_oneshot_max_children()` in `tools/delegate_tool_config.py:86`
    (`delegation.oneshot_max_children`, default 2; 0 = unlimited). Only fires
    in finite one-shot sessions such as `hermes chat -Q`. When
