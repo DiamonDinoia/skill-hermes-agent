@@ -2,10 +2,11 @@
 
 When a user reports `delegate_task` ran fewer subagents than they asked for
 (e.g. "I set max_concurrent_children: 15 but only 9 ran"), there are exactly
-**three** code paths in Hermes that cap a batch. If none of them fired, the
-cap came from the **model itself** — not from Hermes — and the user's
-narration of "the runtime caps at N" is the model rationalising its own
-choice.
+**three** code paths in Hermes that cap a batch. If none of them fired, two
+limits remain: the **model itself** self-limits the batch, and
+`delegation.oneshot_max_children` (default 2) caps one-shot sessions such as
+`hermes chat -Q`. A user's narration of "the runtime caps at N" is often the
+model rationalising its own choice.
 
 ## The three real caps in Hermes
 
