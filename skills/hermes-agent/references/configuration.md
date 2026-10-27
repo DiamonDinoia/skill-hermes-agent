@@ -23,6 +23,20 @@ Full reference: https://hermes-agent.nousresearch.com/docs/user-guide/configurat
 
 `hermes config check` reports sections missing from an older config.
 
+### Reasoning effort
+
+Effort keys live in several places; a "change the effort" request means checking all of them:
+
+| Key | Controls |
+|-----|----------|
+| `agent.reasoning_effort` | The main session loop |
+| `agent.reasoning_overrides` | Per-model overrides (`"<provider>/<model>": "<effort>"`) |
+| `delegation.reasoning_effort` | Replaces the parent's level for delegated children |
+| `delegation.tiers.<tier>.reasoning_effort` | Per-tier overrides (intern / junior / senior / principal); applies only when the child runs on provider flatiron |
+| `auxiliary.<task>.reasoning_effort` | Background aux tasks (compression, title_generation, curator, review, and others) |
+
+A local session freezes its effort at creation. A config.yaml change then takes effect on the next session. A followed session (an opened Bot Chat) tracks its profile instead. A typed `/reasoning --session` overrides a running session at once. User preference on this setup: `high` by default, `max` only when the user explicitly asks. When changing these values, also check automated config writers. On this setup the hermes-dispatch-route cron sync rewrites `delegation.tiers` every 6 hours from the routing json. Change the writer's own source table too, or its next run reverts the edit.
+
 ### Toolsets
 
 Enable/disable via `hermes tools` (interactive) or `hermes tools enable/disable NAME`.
