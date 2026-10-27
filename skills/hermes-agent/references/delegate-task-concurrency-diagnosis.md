@@ -2,15 +2,13 @@
 
 When a user reports `delegate_task` ran fewer subagents than they asked for
 (e.g. "I set max_concurrent_children: 15 but only 9 ran"), there are exactly
-**three** code paths in Hermes that cap a batch. If none of them fired, two
-limits remain: the **model itself** self-limits the batch, and
-`delegation.oneshot_max_children` (default 2) caps one-shot sessions such as
-`hermes chat -Q`. A user's narration of "the runtime caps at N" is often the
-model rationalising its own choice.
+**four** code paths in Hermes that cap a batch. If none of them fired, one
+limit remains: the **model itself** self-limits the batch. A user's narration
+of "the runtime caps at N" is often the model rationalising its own choice.
 
-## The three real caps in Hermes
+## The four real caps in Hermes
 
-All resolved through `tools.delegate_tool._get_max_concurrent_children()`,
+Caps 1-3 are resolved through `tools.delegate_tool._get_max_concurrent_children()`,
 which reads `delegation.max_concurrent_children` from `config.yaml`
 (env fallback `DELEGATION_MAX_CONCURRENT_CHILDREN`, default 3). Floor of 1.
 **No hard ceiling.**
@@ -35,6 +33,16 @@ which reads `delegation.max_concurrent_children` from `config.yaml`
    log line** — it does not cap anything. Easy to mis-read as "Hermes is
    refusing my value."
 
+4. **One-shot session budget.** `tools/delegate_tool.py::_oneshot_spawn_budget`
+   (defined at line 636, charged at line 725), resolved through
+   `_get_oneshot_max_children()` in `tools/delegate_tool_config.py:86`
+   (`delegation.oneshot_max_children`, default 2; 0 = unlimited). Only fires
+   in finite one-shot sessions such as `hermes chat -Q`. When
+   `spent + requested > cap`, the call returns a `tool_error`:
+   `"Delegation budget for this one-shot run is exhausted ({spent}/{cap}
+   subagents used; delegation.oneshot_max_children). ..."` Interactive and
+   gateway sessions are never charged.
+
 ## Diagnostic recipe
 
 When a user says "delegate is capped at N":
@@ -53,9 +61,8 @@ python -c "from tools.delegate_tool import _get_max_concurrent_children; \
 ```
 
 If config and `_get_max_concurrent_children()` agree, and neither log line
-appears, two limits remain. The model self-limits the batch, and
-`delegation.oneshot_max_children`, default 2, caps one-shot sessions such as
-`hermes chat -Q`.
+appears, and no one-shot rejection fired, one limit remains: the model
+self-limits the batch.
 
 ## Why models self-limit batches
 
@@ -95,8 +102,10 @@ models trim less aggressively in practice.
   controls whether children inherit yolo / approval bypass. Don't mistake
   it for a throttle.
 - **The cost-warning log fires on every call** when the value is > 10.
-  Don't take its presence as evidence that anything was capped — only
-  the `Truncated...` and `Too many tasks` lines indicate actual capping.
+  Don't take its presence as evidence that anything was capped. Only the
+  `Truncated...` and `Too many tasks` lines, and in one-shot sessions a
+  `Delegation budget for this one-shot run is exhausted` rejection,
+  indicate actual capping.
 - **Don't suggest reverting `max_concurrent_children` to fix this.** The
   user set it deliberately; the fix is to push back on the model, not
   the config.
